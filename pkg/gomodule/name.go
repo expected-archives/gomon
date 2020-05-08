@@ -3,25 +3,26 @@ package gomodule
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"io"
 	"os"
 	"path"
+
+	"github.com/pkg/errors"
 )
 
-var ErrUnableToGetGoMod = errors.New("unable to get go gomodule")
+var ErrUnableToGetGoMod = "unable to get go gomodule"
 
 func GetName() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		return "", ErrUnableToGetGoMod
+		return "", errors.Wrap(err, ErrUnableToGetGoMod)
 	}
 
 	goModPath := path.Join(dir, "go.mod")
 
 	file, err := os.Open(goModPath)
 	if err != nil {
-		return "", ErrUnableToGetGoMod
+		return "", errors.Wrap(err, ErrUnableToGetGoMod)
 	}
 
 	defer file.Close()
@@ -30,21 +31,21 @@ func GetName() (string, error) {
 	for {
 		line, err := getFullLine(reader)
 		if err != nil && err != io.EOF {
-			return "", ErrUnableToGetGoMod
+			return "", errors.Wrap(err, ErrUnableToGetGoMod)
 		}
 
-		if bytes.Contains(line, []byte("gomodule")) {
+		if bytes.Contains(line, []byte("module")) {
 			return getModuleName(line), nil
 		}
 
 		if err != nil && err == io.EOF {
-			return "", ErrUnableToGetGoMod
+			return "", errors.Wrap(err, ErrUnableToGetGoMod)
 		}
 	}
 }
 
 func getModuleName(line []byte) string {
-	lineSplit := bytes.SplitN(line, []byte("gomodule"), 2)
+	lineSplit := bytes.SplitN(line, []byte("module"), 2)
 	if len(lineSplit) != 2 {
 		return ""
 	}
