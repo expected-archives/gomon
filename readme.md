@@ -4,6 +4,10 @@ Gomon is a tool to launch multiples apps at the same time with hot reloading sup
 
 It will only reload the application if the modified file is contained in a package imported by this application.
 
+#### Demo
+
+![demo](.github/gomon.gif)
+
 #### Install
 
 `go install github.com/expectedsh/gomon/...`
