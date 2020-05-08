@@ -11,6 +11,8 @@ import (
 )
 
 func FromFile(repo string, filepath string, result map[string]bool) {
+	result[filepath] = true
+
 	for _, importPath := range getImports(filepath) {
 		if strings.HasPrefix(importPath, repo) {
 			pkgPath := strings.Replace(importPath, repo+"/", "", -1)
