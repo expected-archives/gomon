@@ -27,3 +27,22 @@ It will only reload the application if the modified file is contained in a packa
       color: cyan
     ```
 2. Launch `gomon run` :D
+
+
+#### Colors
+
+```
+"red"
+"green"
+"yellow"
+"blue"
+"purple"
+"cyan"
+"gray"
+"red_light"
+"green_light"
+"yellow_light"
+"blue_light"
+"purple_light"
+"cyan_light"
+```
