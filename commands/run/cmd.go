@@ -63,7 +63,7 @@ func run(_ *cobra.Command, _ []string) error {
 		return errors.Wrap(err, "unable to get config file")
 	}
 
-	if err := pids.Kill(); err != nil {
+	if err := pids.Kill(cfgHash); err != nil {
 		return errors.Wrap(err, "unable to kill old pid run by gomon")
 	}
 
@@ -102,7 +102,7 @@ func run(_ *cobra.Command, _ []string) error {
 
 	wg.Wait()
 
-	if err := pids.Save(); err != nil {
+	if err := pids.Save(cfgHash); err != nil {
 		return errors.Wrap(err, "unable to save pidList")
 	}
 

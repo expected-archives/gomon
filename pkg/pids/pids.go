@@ -24,11 +24,11 @@ func Add(cmd *exec.Cmd) {
 	}
 }
 
-func Save() error {
+func Save(hash string) error {
 	pidListMutex.Lock()
 	defer pidListMutex.Unlock()
 
-	file := utils.GetGomonPidListFile()
+	file := utils.GetGomonPidListFile(hash)
 
 	marshal, err := gobutils.Marshal(pidList)
 	if err != nil {
@@ -42,11 +42,11 @@ func Save() error {
 	return nil
 }
 
-func Kill() error {
+func Kill(hash string) error {
 	pidListMutex.Lock()
 	defer pidListMutex.Unlock()
 
-	file := utils.GetGomonPidListFile()
+	file := utils.GetGomonPidListFile(hash)
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
