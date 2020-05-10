@@ -134,7 +134,7 @@ func (a *application) log(line string, error bool) {
 
 	lineToPrint += fmt.Sprintf(fmt.Sprintf("%%-%ds |", a.paddingAppName), a.config.Name)
 
-	if error {
+	if error && !fIgnoreError {
 		if fColors {
 			lineToPrint += colors.Bold.String() + colors.Red.String()
 		}

@@ -28,6 +28,7 @@ var Command = &cobra.Command{
 var (
 	fPid          bool
 	fColors       bool
+	fIgnoreError  bool
 	fConfig       string
 	fDirectories  []string
 	fWatchTimeout time.Duration
@@ -139,6 +140,12 @@ func init() {
 		"p",
 		false,
 		"show the pid for each app")
+
+	Command.Flags().BoolVarP(
+		&fIgnoreError, "ignore-error",
+		"i",
+		false,
+		"ignore errors")
 
 	Command.Flags().StringVarP(
 		&fConfig, "config",
