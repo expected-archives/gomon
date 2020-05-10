@@ -163,7 +163,7 @@ func (a *application) log(line string, error bool, prefix string) {
 		}
 	}
 
-	if !hasPid {
+	if !hasPid && fPid {
 		lineToPrint += "      "
 	}
 
