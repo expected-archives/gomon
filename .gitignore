@@ -7,7 +7,6 @@
 *.so
 *.dylib
 tests
-.gomon.yaml
 
 # Test binary, built with `go test -c`
 *.test
