@@ -2,22 +2,19 @@ package run
 
 import (
 	"context"
-	"crypto/md5"
-	"encoding/hex"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/expectedsh/gomon/pkg/colors"
 	"github.com/expectedsh/gomon/pkg/gomodule"
 	"github.com/expectedsh/gomon/pkg/pids"
+	"github.com/expectedsh/gomon/pkg/utils"
 )
 
 var Command = &cobra.Command{
@@ -32,7 +29,6 @@ var (
 	fPid          bool
 	fColors       bool
 	fIgnoreError  bool
-	fConfig       string
 	fDirectories  []string
 	fWatchTimeout time.Duration
 	fKillTimeout  time.Duration
@@ -58,8 +54,13 @@ var cfgHash string
 var applicationConfigList []applicationConfig
 var applications = map[string]*application{}
 
-func run(_ *cobra.Command, _ []string) error {
-	if err := initConfig(); err != nil {
+func run(c *cobra.Command, _ []string) error {
+	cfg, err := c.Root().Flags().GetString("config")
+	if err != nil {
+		return err
+	}
+
+	if err := utils.InitConfig(cfg, &cfgHash, &applicationConfigList); err != nil {
 		return errors.Wrap(err, "unable to get config file")
 	}
 
@@ -160,12 +161,6 @@ func init() {
 		false,
 		"ignore build output")
 
-	Command.Flags().StringVarP(
-		&fConfig, "config",
-		"C",
-		"./.gomon.yaml",
-		"the location of the config file that describe what to run")
-
 	Command.Flags().StringArrayVarP(
 		&fDirectories, "directories",
 		"d",
@@ -222,23 +217,6 @@ func stopApp(sigint bool, app *application, exit chan bool) {
 			return
 		}
 	}
-}
-
-func initConfig() error {
-	bytes, err := ioutil.ReadFile(fConfig)
-
-	hasher := md5.New()
-	hasher.Write(bytes)
-	cfgHash = hex.EncodeToString(hasher.Sum(nil))
-
-	if err != nil {
-		return err
-	}
-	if err := yaml.Unmarshal(bytes, &applicationConfigList); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func getAppPadding() int {

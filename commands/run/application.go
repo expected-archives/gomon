@@ -111,7 +111,7 @@ func (a *application) run(exit chan bool) error {
 	}
 
 	time.AfterFunc(time.Millisecond*500, func() {
-		pids.Add(cmd)
+		pids.Add(a.config.Name, cmd)
 	})
 
 	go func() {

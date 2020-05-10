@@ -12,15 +12,15 @@ import (
 	"github.com/expectedsh/gomon/pkg/utils"
 )
 
-var pidList []int
+var pidMap = map[string]int{}
 var pidListMutex = &sync.Mutex{}
 
-func Add(cmd *exec.Cmd) {
+func Add(name string, cmd *exec.Cmd) {
 	pidListMutex.Lock()
 	defer pidListMutex.Unlock()
 
 	if cmd != nil && cmd.Process != nil {
-		pidList = append(pidList, cmd.Process.Pid)
+		pidMap[name] = cmd.Process.Pid
 	}
 }
 
@@ -30,7 +30,7 @@ func Save(hash string) error {
 
 	file := utils.GetGomonPidListFile(hash)
 
-	marshal, err := gobutils.Marshal(pidList)
+	marshal, err := gobutils.Marshal(pidMap)
 	if err != nil {
 		return err
 	}
@@ -52,7 +52,7 @@ func Kill(hash string) error {
 		return err
 	}
 
-	var oldPidList []int
+	var oldPidList map[string]int
 	if err := gobutils.Unmarshal(content, &oldPidList); err != nil {
 		if err == io.EOF {
 			return nil
@@ -65,4 +65,22 @@ func Kill(hash string) error {
 	}
 
 	return nil
+}
+
+func Load(hash string) (map[string]int, error) {
+	file := utils.GetGomonPidListFile(hash)
+	content, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	var oldPidList map[string]int
+	if err := gobutils.Unmarshal(content, &oldPidList); err != nil {
+		if err == io.EOF {
+			return map[string]int{}, nil
+		}
+		return nil, err
+	}
+
+	return oldPidList, nil
 }

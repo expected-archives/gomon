@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/expectedsh/gomon/commands/older_pids"
 	"github.com/expectedsh/gomon/commands/run"
 )
 
@@ -17,5 +18,11 @@ func main() {
 }
 
 func init() {
+	rootCmd.Flags().String(
+		"config",
+		"./.gomon.yaml",
+		"the location of the config file that describe what to run")
+
 	rootCmd.AddCommand(run.Command)
+	rootCmd.AddCommand(older_pids.Command)
 }
