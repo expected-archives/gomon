@@ -2,7 +2,8 @@ package run
 
 import (
 	"context"
-	"errors"
+	"crypto/md5"
+	"encoding/hex"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -11,10 +12,12 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/expectedsh/gomon/pkg/colors"
 	"github.com/expectedsh/gomon/pkg/gomodule"
+	"github.com/expectedsh/gomon/pkg/pids"
 )
 
 var Command = &cobra.Command{
@@ -32,6 +35,7 @@ var (
 	fConfig       string
 	fDirectories  []string
 	fWatchTimeout time.Duration
+	fKillTimeout  time.Duration
 )
 
 type applicationConfig struct {
@@ -50,12 +54,17 @@ type applicationConfig struct {
 	FilesToExclude []string `yaml:"files_to_exclude"`
 }
 
+var cfgHash string
 var applicationConfigList []applicationConfig
 var applications = map[string]*application{}
 
 func run(_ *cobra.Command, _ []string) error {
 	if err := initConfig(); err != nil {
-		return err
+		return errors.Wrap(err, "unable to get config file")
+	}
+
+	if err := pids.Kill(); err != nil {
+		return errors.Wrap(err, "unable to kill old pid run by gomon")
 	}
 
 	if len(applicationConfigList) == 0 {
@@ -64,7 +73,7 @@ func run(_ *cobra.Command, _ []string) error {
 
 	moduleName, err := gomodule.GetName()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to get gomodule")
 	}
 
 	var (
@@ -93,6 +102,10 @@ func run(_ *cobra.Command, _ []string) error {
 
 	wg.Wait()
 
+	if err := pids.Save(); err != nil {
+		return errors.Wrap(err, "unable to save pidList")
+	}
+
 	return nil
 }
 
@@ -102,23 +115,17 @@ func handleRunningApplication(ctx context.Context, wg *sync.WaitGroup, app *appl
 	for {
 		exit := make(chan bool)
 		if err := app.run(exit); err != nil {
-			wg.Done()
-			return
+			app.log("This application could not be run because it encountered an error.", true, "GOMON")
+			app.log("Waiting for a restart", true, "GOMON")
 		}
 
 		select {
 		case <-ctx.Done():
-			<-exit
+			stopApp(false, app, exit)
 			wg.Done()
 			return
 		case <-app.restart:
-			if err := app.getCmd().Process.Signal(syscall.SIGINT); err != nil {
-				if err := app.getCmd().Process.Kill(); err != nil {
-					wg.Done()
-					return
-				}
-			}
-			<-exit
+			stopApp(true, app, exit)
 		case <-exit:
 			if app.config.MustNotRestart {
 				wg.Done()
@@ -145,7 +152,13 @@ func init() {
 		&fIgnoreError, "ignore-error",
 		"i",
 		false,
-		"ignore errors")
+		"output error like normal message")
+
+	Command.Flags().BoolVarP(
+		&fIgnoreError, "ignore-build",
+		"b",
+		false,
+		"ignore build output")
 
 	Command.Flags().StringVarP(
 		&fConfig, "config",
@@ -165,10 +178,59 @@ func init() {
 		time.Second,
 		"the duration after a change to restart an app")
 
+	Command.Flags().DurationVarP(
+		&fWatchTimeout, "kill-timeout",
+		"k",
+		time.Second*2,
+		"kill the program after this duration if it is living after a sigint")
+
+}
+
+func stopApp(sigint bool, app *application, exit chan bool) {
+
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*2)
+	defer cancelFunc()
+
+	cmd := app.getCmd()
+	if cmd == nil || cmd != nil && cmd.ProcessState != nil && cmd.ProcessState.Exited() {
+		return
+	}
+
+	if sigint && cmd != nil {
+		if err := cmd.Process.Signal(syscall.SIGINT); err != nil {
+			if cmd.ProcessState.Exited() {
+				return
+			}
+		}
+	}
+
+	alreadyForceKill := false
+
+	for {
+		if alreadyForceKill {
+			<-exit
+			return
+		}
+
+		select {
+		case <-ctx.Done():
+			app.log("This app take too long to be interrupted, so gomon will kill it.", false, "GOMON")
+			cmd.Process.Kill()
+			alreadyForceKill = true
+			break
+		case <-exit:
+			return
+		}
+	}
 }
 
 func initConfig() error {
 	bytes, err := ioutil.ReadFile(fConfig)
+
+	hasher := md5.New()
+	hasher.Write(bytes)
+	cfgHash = hex.EncodeToString(hasher.Sum(nil))
+
 	if err != nil {
 		return err
 	}

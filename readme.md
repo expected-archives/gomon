@@ -11,6 +11,10 @@ It will only reload the application if the modified file is contained in a packa
 #### Install
 
 `go install github.com/expectedsh/gomon/...`
+or
+`go get github.com/expectedsh/gomon/...`
+
+(because go is such a weird thing)
 
 #### How to use
 

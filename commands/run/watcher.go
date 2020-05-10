@@ -2,12 +2,12 @@ package run
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
 
 	"github.com/expectedsh/gomon/pkg/utils"
 )
@@ -32,11 +32,11 @@ func newWatcher(ctx context.Context) *watcher {
 func (w *watcher) watchForRestarts() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "unable to create watcher")
 	}
 
 	if err := w.prepareWatcher(watcher); err != nil {
-		return err
+		return errors.Wrap(err, "unable to prepare watcher with files and directories")
 	}
 
 	go func() {
@@ -88,7 +88,9 @@ func (w *watcher) handleRestarts() {
 		if !w.lastEvent.IsZero() && time.Since(w.lastEvent) >= fWatchTimeout {
 			w.lastEvent = time.Time{}
 			for app := range w.appsToRestart {
-				fmt.Printf("\nRestarting applicaion %q due to file change...\n\n", app)
+				applications[app].log("", false, "")
+				applications[app].log("Restarting ...", false, "GOMON")
+				applications[app].log("", false, "")
 				applications[app].restart <- true
 			}
 			w.appsToRestart = map[string]bool{}
