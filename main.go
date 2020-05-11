@@ -8,6 +8,7 @@ import (
 )
 
 var rootCmd = &cobra.Command{
+	Version: "0.1",
 	Use:     "gomon",
 	Short:   "Gomon is a utility tool to run multiple application at once that support hot reloading.",
 	Example: "gomon run",
