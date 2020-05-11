@@ -47,8 +47,8 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload gomon-linux-am64
-        id: upload-release-asset
+      - name: Upload gomon-linux-amd64
+        id: upload-release-asset-gomon-linux-amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,8 +58,8 @@ jobs:
           asset_name: ${{ github.ref }}
           asset_content_type: binary
 
-      - name: Upload gomon-darwin-am64
-        id: upload-release-asset
+      - name: Upload gomon-darwin-amd64
+        id: upload-release-asset-darwin-amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
