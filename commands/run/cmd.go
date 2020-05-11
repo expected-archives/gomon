@@ -94,6 +94,8 @@ func run(c *cobra.Command, _ []string) error {
 		return err
 	}
 
+	go pids.SaveAtInterval(cfgHash)
+
 	end := make(chan os.Signal, 1)
 	signal.Notify(end, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 

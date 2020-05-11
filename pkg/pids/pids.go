@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/expectedsh/gomon/pkg/gobutils"
 	"github.com/expectedsh/gomon/pkg/utils"
@@ -83,4 +84,11 @@ func Load(hash string) (map[string]int, error) {
 	}
 
 	return oldPidList, nil
+}
+
+func SaveAtInterval(hash string) {
+	for {
+		Save(hash)
+		time.Sleep(10 * time.Second)
+	}
 }
