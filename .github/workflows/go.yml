@@ -37,4 +37,4 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v . && echo ${{GITHUB_SHA}}
+      run: go build -v .
