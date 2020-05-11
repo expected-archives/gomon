@@ -56,7 +56,10 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: builds/gomon-linux-amd64
           asset_name: gomon-linux-amd64
-          asset_content_type: binary
+          asset_content_type: application/octet-stream
+
+      - name: Wait
+        run: sleep 2
 
       - name: Upload gomon-darwin-amd64
         id: upload-release-asset-darwin-amd64
@@ -67,5 +70,5 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: builds/gomon-darwin-amd64
           asset_name: gomon-darwin-amd64
-          asset_content_type: binary
+          asset_content_type: application/octet-stream
 
