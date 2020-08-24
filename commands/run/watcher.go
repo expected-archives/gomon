@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -69,6 +70,13 @@ func (w *watcher) watchForRestarts() error {
 
 func (w *watcher) prepareWatcher(watcher *fsnotify.Watcher) error {
 	for _, directory := range fDirectories {
+		if _, err := os.Lstat(directory); err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return err
+		}
+
 		subDirs := []string{directory}
 		utils.GetSubDirectories(directory, &subDirs)
 
